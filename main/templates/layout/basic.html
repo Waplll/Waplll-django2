@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% load static %}
+{% load bootstrap4 %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='slim' %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">
+  <title>{% block title %} Главная {% endblock %} - Дизайн-про </title>
+</head>
+<body>
+<div class="container-fluid">
+<div class="d-flex flex-column flex-md-row p-3 px-md-4 mb-3  bg-white border-bottom box-shadow">
+   <h5 class="mr-md-auto p-2">Дизайн-про</h5>
+   {% if user.is_authenticated %}
+   <div class="nav-item dropdown">
+       <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true"
+          aria-expanded="false">Профиль</a>
+       <div class="dropdown-menu">
+           <a class="dropdown-item" href="{% url 'main:profile' %}">Мои объявления</a>
+           <a class="dropdown-item" href="{% url 'main:profile_change' %}">Изменить личные данные</a>
+           <a class="dropdown-item" href="{% url 'main:password_change' %}">Изменить пароль</a>
+           <div class="dropdown-divider"></div>
+           <form action="{% url 'main:logout' %}" method="post">{% csrf_token %}<button class="dropdown-item" type="submit">Выйти</button></form>
+           <div class="dropdown-divider"></div>
+           <a class="dropdown-item" href="{% url 'main:profile_delete' %}">Удалить</a>
+       </div>
+   </div>
+   {% else %}
+   <a class="p-2 text-dark" href="{% url 'main:register' %}">Регистрация</a>
+   <a class="p-2 text-dark" href="{% url 'main:login' %}">Вход</a>
+   {% endif %}
+</div>
+
+  <div class="row">
+
+      <nav class="col-md-auto nav flex-column">
+          <a class="nav-link root" href="{% url 'main:index'  %}" >Главная</a>
+      </nav>
+
+      <div class="container">
+      {% bootstrap_messages %}
+      {% block content %}
+      {% endblock %}
+      </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
