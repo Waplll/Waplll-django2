@@ -1,0 +1,15 @@
+{% extends "layout/basic.html" %}
+
+{% load bootstrap4 %}
+
+{% block title %} Создание заявки {% endblock %}
+
+{% block content %}
+<h2>Создание заявки на дизайн интерьера</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons submit='Создать заявку' %} {% endbuttons %}
+</form>
+<a href="{% url 'main:view_requests' %}">Назад к заявкам</a>
+{% endblock %}

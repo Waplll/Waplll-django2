@@ -1,0 +1,13 @@
+{% extends "layout/basic.html" %}
+
+{% block title %} Удаление заявки {% endblock %}
+
+{% block content %}
+<h2>Удаление заявки</h2>
+<p>Вы уверены, что хотите удалить заявку "{{ request_obj.title }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Удалить</button>
+    <a href="{% url 'main:view_requests' %}">Отмена</a>
+</form>
+{% endblock %}

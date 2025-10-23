@@ -1,0 +1,24 @@
+{% extends "layout/basic.html" %}
+
+{% load bootstrap4 %}
+
+{% block title %} Заявки {% endblock %}
+
+{% block content %}
+<h2>Список заявок</h2>
+<ul class="request-list">
+    {% for request in requests %}
+        <li class="request-item">
+            <strong>{{ request.title }}</strong> - {{ request.status }}
+            <p>{{ request.description }}</p>
+            <p>Категория: {{ request.category }}</p>
+            {% if request.photo %}
+                <img src="{{ request.photo.url }}" alt="{{ request.title }}" style="max-width: 400px; max-height: 400px">
+            {% endif %}
+            <p>Дата создания: {{ request.timestamp }}</p>
+            <a href="{% url 'main:delete_request' request.id %}">Удалить заявку</a>
+        </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'main:create_request' %}">Создать новую заявку</a>
+{% endblock %}

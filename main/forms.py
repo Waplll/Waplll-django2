@@ -1,11 +1,9 @@
-
 from django import forms
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-
 from .models import user_registrated, AdvUser
-
-
+import re
+from .models import CreateRequest, Category
 class ChangeUserInfoForm(forms.ModelForm):
    email = forms.EmailField(required=True, label='Адрес электронной почты')
 
@@ -15,38 +13,38 @@ class ChangeUserInfoForm(forms.ModelForm):
 
 class RegisterUserForm(forms.ModelForm):
     email = forms.EmailField(required=True, label='Адрес электронной почты')
+
     password1 = forms.CharField(
         label='Пароль',
-        widget=forms.PasswordInput,
-        help_text=password_validation.password_validators_help_text_html()
+        widget=forms.PasswordInput,help_text=password_validation.password_validators_help_text_html()
     )
     password2 = forms.CharField(
         label='Пароль (повторно)',
-        widget=forms.PasswordInput,
-        help_text='Повторите тот же самый пароль еще раз'
+        widget=forms.PasswordInput,help_text='Повторите тот же самый пароль еще раз'
     )
     fio = forms.CharField(label='ФИО', max_length=100)
     username = forms.CharField(label='Логин', max_length=30)
     consent = forms.BooleanField(label='Согласие на обработку персональных данных')
 
+    def clean_username(self):
+        username = self.cleaned_data['username']
+
+        if AdvUser.objects.filter(username=username).exists():
+            raise ValidationError( f'Этот логин "{username}" уже занят. Пожалуйста, придумайте другой.')
+        return username
+
     def clean_fio(self):
         fio = self.cleaned_data.get('fio')
-        valid_characters = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯа-бвгдеёжзийклмнопрстуфхцчшщъыьэюя '
+        valid_characters = "^[А-яЁё -]{1,}$" # /- не используется в питоне
 
-        if not all(char in valid_characters for char in fio):
+        if not re.match(valid_characters, fio):
             raise ValidationError('ФИО может содержать только кириллические буквы, пробелы и дефисы.')
 
-        if not any(char in 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯа' for char in fio):
+        if not re.match(valid_characters, fio):
             raise ValidationError('ФИО должно содержать хотя бы одну кириллическую букву.')
 
         return fio
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-
-        if AdvUser.objects.filter(email=email).exists():
-            raise ValidationError('Пользователь с таким адресом электронной почты уже существует.')
-        return email
 
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
@@ -84,3 +82,21 @@ class RegisterUserForm(forms.ModelForm):
     class Meta:
         model = AdvUser
         fields = ('username', 'fio', 'email', 'password1', 'password2', 'consent')
+
+
+class CreateRequestForm(forms.ModelForm):
+    category = forms.ModelChoiceField(queryset=Category.objects.all(), empty_label=None, label='Категория')
+    photo = forms.ImageField(label='Фото помещения', required=False)
+
+    class Meta:
+        model = CreateRequest
+        fields = ['title', 'description', 'category', 'photo']
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if photo:
+            if photo.size > 2 * 1024 * 1024:  # 2MB
+                raise ValidationError('Размер файла превышает 2Мб.')
+            if photo.image.format.lower() not in ['jpeg', 'jpg', 'png', 'bmp']:
+                raise ValidationError('Неподдерживаемый формат файла. Допустимые форматы: JPG, JPEG, PNG, BMP.')
+        return photo
