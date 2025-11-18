@@ -1,26 +1,27 @@
 from django.urls import path
-from .views import index, create_request, view_requests, delete_request
-from .views import BBLoginView
-from .views import profile
-from .views import BBLogoutView
-from .views import ChangeUserInfoView
-from .views import BBPasswordChangeView
-from .views import RegisterDoneView, RegisterUserView
-from .views import DeleteUserView
+from .views import (
+    index, profile, BBLoginView, BBLogoutView,
+    ChangeUserInfoView, RegisterUserView,
+    CreateRequestView, DeleteRequestView, user_requests,
+    change_request_status, manage_categories, create_category,
+    edit_category, delete_category
+)
 
 app_name = 'main'
 
 urlpatterns = [
-   path('', index, name='index'),
-   path('accounts/login', BBLoginView.as_view(), name='login'),
-   path('accounts/profile/', profile, name='profile'),
-   path('accounts/logout/', BBLogoutView.as_view(), name='logout'),
-   path('accounts/profile/change/', ChangeUserInfoView.as_view(), name='profile_change'),
-   path('accounts/password/change/', BBPasswordChangeView.as_view(), name='password_change'),
-   path('accounts/register/done/', RegisterDoneView.as_view(), name='register_done'),
-   path('accounts/register/', RegisterUserView.as_view(), name='register'),
-   path('accounts/profile/delete/', DeleteUserView.as_view(), name='profile_delete'),
-   path('create/', create_request, name='create_request'),
-   path('requests/', view_requests, name='view_requests'),
-   path('delete/<int:request_id>/', delete_request, name='delete_request'),
+    path('', index, name='index'),
+    path('accounts/login/', BBLoginView.as_view(), name='login'),
+    path('accounts/logout/', BBLogoutView.as_view(), name='logout'),
+    path('accounts/profile/', profile, name='profile'),
+    path('accounts/profile/change/', ChangeUserInfoView.as_view(), name='profile_change'),
+    path('accounts/register/', RegisterUserView.as_view(), name='register'),
+    path('requests/create/', CreateRequestView.as_view(), name='create_request'),
+    path('requests/my/', user_requests, name='user_requests'),
+    path('requests/<int:pk>/delete/', DeleteRequestView.as_view(), name='delete_request'),
+    path('requests/<int:pk>/change-status/', change_request_status, name='change_request_status'),
+    path('categories/', manage_categories, name='manage_categories'),
+    path('categories/create/', create_category, name='create_category'),
+    path('categories/<int:pk>/edit/', edit_category, name='edit_category'),
+    path('categories/<int:pk>/delete/', delete_category, name='delete_category'),
 ]

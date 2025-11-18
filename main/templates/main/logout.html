@@ -1,8 +1,27 @@
-{% extends "layout/basic.html" %}
+{% extends "main/basic.html" %}
 
-{% block title %} Выход {% endblock %}
+{% block title %}Выход{% endblock %}
 
 {% block content %}
-    <h2>Выход</h2>
-    <p>Вы успешно вышли с сайта.</p>
+<div class="container">
+    <div style="max-width: 400px; margin: 0 auto; text-align: center;">
+        <div class="card">
+            <div class="card-body" style="padding: 40px 20px;">
+                <h2 style="color: #1f5278; margin-bottom: 20px;">Выход</h2>
+                <p style="color: #666; margin-bottom: 30px; font-size: 16px;">
+                    Вы уверены, что хотите выйти из системы?
+                </p>
+                <form method="post" style="display: flex; gap: 10px; flex-direction: column;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        Да, выйти
+                    </button>
+                    <a href="{% url 'main:index' %}" class="btn btn-secondary btn-lg">
+                        Отмена
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

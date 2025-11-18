@@ -1,19 +1,75 @@
-{% extends "layout/basic.html" %}
+{% extends "main/basic.html" %}
 
-{% load bootstrap4 %}
-
-{% block title %} Вход {% endblock %}
+{% block title %}Вход{% endblock %}
 
 {% block content %}
-<h2>Вход</h2>
-{% if user.is_authenticated %}
-<p>Вы уже выполнили вход.</p>
-{% else %}
-<form method="post">
-   {% csrf_token %}
-   {% bootstrap_form form layout='horizontal' %}
-   <input type="hidden" name="next" value="{{ next }}">
-   {% buttons submit='Войти' %} {% endbuttons %}
-</form>
-{% endif %}
+<div class="container">
+    <div style="max-width: 400px; margin: 0 auto;">
+        <h2 style="color: #1f5278; margin-bottom: 30px; text-align: center;">Вход</h2>
+
+        <div class="card">
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="form-group">
+                            {% if field.label %}
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% endif %}
+
+                            {{ field }}
+
+                            {% if field.errors %}
+                                <div style="color: #dc3545; font-size: 13px; margin-top: 5px;">
+                                    {% for error in field.errors %}
+                                        <p style="margin: 3px 0;">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 20px; font-size: 16px;">
+                        Войти
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="color: #666; margin-bottom: 10px;">Нет аккаунта?</p>
+                    <a href="{% url 'main:register' %}" class="btn btn-secondary" style="width: 100%; padding: 10px;">
+                        Зарегистрироваться
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input[type="text"], input[type="email"], input[type="password"], textarea, select {
+        width: 100%;
+        padding: 12px;
+        margin: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #1f5278;
+        box-shadow: 0 0 0 3px rgba(31, 82, 120, 0.1);
+    }
+</style>
 {% endblock %}

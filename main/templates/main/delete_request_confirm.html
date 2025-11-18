@@ -1,0 +1,53 @@
+{% extends "main/basic.html" %}
+
+{% block title %}Удаление заявки{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <div class="card" style="border: 2px solid #dc3545;">
+            <div style="background-color: #dc3545; color: white; padding: 20px;">
+                <h3 style="margin: 0; font-size: 20px;">Подтверждение удаления</h3>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 20px; font-size: 16px;">
+                    Вы уверены, что хотите удалить заявку <strong>"{{ object.title }}"</strong>?
+                </p>
+
+                <div class="alert alert-warning" style="margin-bottom: 20px;">
+                    <strong>Внимание!</strong> Это действие невозможно отменить.
+                </div>
+
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ddd;">
+                    <div style="margin-bottom: 10px;">
+                        <strong>Название:</strong> {{ object.title }}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Дата создания:</strong> {{ object.timestamp|date:"d.m.Y H:i" }}
+                    </div>
+                    <div>
+                        <strong>Статус:</strong>
+                        {% if object.status == 'new' %}
+                            <span class="badge badge-info">Новая</span>
+                        {% elif object.status == 'inprogress' %}
+                            <span class="badge badge-warning">В работе</span>
+                        {% elif object.status == 'completed' %}
+                            <span class="badge badge-success">Завершена</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form method="post" style="margin-bottom: 10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" style="width: 100%; padding: 12px; font-size: 16px;">
+                        Да, удалить заявку
+                    </button>
+                </form>
+                <a href="{% url 'main:user_requests' %}" class="btn btn-secondary" style="width: 100%; padding: 12px; font-size: 16px; display: block;">
+                    Отмена
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

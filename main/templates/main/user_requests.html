@@ -1,0 +1,94 @@
+{% extends "main/basic.html" %}
+
+{% block title %}Мои заявки{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-flex">
+        <h2>Мои заявки</h2>
+        <a href="{% url 'main:create_request' %}" class="btn btn-primary btn-lg">
+            Создать заявку
+        </a>
+    </div>
+
+    {% if user_requests %}
+        <div class="row">
+            {% for request_item in user_requests %}
+            <div class="col">
+                <div class="card">
+                    {% if request_item.photo %}
+                    <img src="{{ request_item.photo.url }}" alt="{{ request_item.title }}" class="card-img">
+                    {% else %}
+                    <div class="card-img-placeholder">
+                        [Нет фото]
+                    </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <div class="card-title">{{ request_item.title }}</div>
+                        <p class="card-text">{{ request_item.description|truncatewords:20 }}</p>
+
+                        <div style="margin-bottom: 15px;">
+                            {% if request_item.category %}
+                            <div class="card-info">
+                                <strong>Категория:</strong> {{ request_item.category.name }}
+                            </div>
+                            {% endif %}
+                            <div class="card-info">
+                                <strong>Дата создания:</strong> {{ request_item.timestamp|date:"d.m.Y H:i" }}
+                            </div>
+                            <div class="card-info">
+                                <strong>Статус:</strong>
+                                {% if request_item.status == 'new' %}
+                                    <span class="badge badge-info">Новая</span>
+                                {% elif request_item.status == 'inprogress' %}
+                                    <span class="badge badge-warning">Принято в работу</span>
+                                {% elif request_item.status == 'completed' %}
+                                    <span class="badge badge-success">Выполнено</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            {% if user.is_staff or user.is_superuser %}
+                                <a href="{% url 'main:change_request_status' request_item.pk %}" class="btn btn-info btn-sm" title="Изменить статус">
+                                    Изменить статус
+                                </a>
+                            {% endif %}
+
+                            {% if user.is_staff or user.is_superuser %}
+                                {% if request_item.status == 'new' %}
+                                <a href="{% url 'main:delete_request' request_item.pk %}" class="btn btn-danger btn-sm" title="Удалить заявку" onclick="return confirm('Вы уверены, что хотите удалить эту заявку?');">
+                                    Удалить
+                                </a>
+                                {% else %}
+                                <button class="btn btn-secondary btn-sm" disabled title="Нельзя удалить заявку в работе или завершенную">
+                                    Удалить
+                                </button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <div>
+                <h3 style="margin-bottom: 10px; color: #0c5460;">Заявок нет</h3>
+                <p style="margin-bottom: 15px;">У вас пока нет ни одной заявки. Создайте первую заявку на разработку дизайна интерьера.</p>
+                <a href="{% url 'main:create_request' %}" class="btn btn-primary">
+                    Создать первую заявку
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 40px; text-align: center;">
+        <a href="{% url 'main:manage_categories' %}" class="btn btn-secondary btn-lg">
+            Управлять категориями
+        </a>
+    </div>
+</div>
+{% endblock %}

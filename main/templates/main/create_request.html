@@ -1,15 +1,84 @@
-{% extends "layout/basic.html" %}
+{% extends "main/basic.html" %}
 
-{% load bootstrap4 %}
-
-{% block title %} Создание заявки {% endblock %}
+{% block title %}Создать заявку{% endblock %}
 
 {% block content %}
-<h2>Создание заявки на дизайн интерьера</h2>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {% bootstrap_form form %}
-    {% buttons submit='Создать заявку' %} {% endbuttons %}
-</form>
-<a href="{% url 'main:view_requests' %}">Назад к заявкам</a>
+<div class="container">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1f5278; margin-bottom: 30px;">Создание заявки на разработку дизайна интерьера</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <div>
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        <div class="form-group">
+                            {% if field.label %}
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% endif %}
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div style="color: #dc3545; font-size: 13px; margin-top: 5px;">
+                                    {% for error in field.errors %}
+                                        <p style="margin: 3px 0;">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                            Создать заявку
+                        </button>
+                        <a href="{% url 'main:user_requests' %}" class="btn btn-secondary btn-lg" style="flex: 1; text-align: center;">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input[type="text"], input[type="email"], textarea, select {
+        width: 100%;
+        padding: 12px;
+        margin: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #1f5278;
+        box-shadow: 0 0 0 3px rgba(31, 82, 120, 0.1);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+</style>
 {% endblock %}

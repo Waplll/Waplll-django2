@@ -1,24 +1,24 @@
 {% extends "main/basic.html" %}
 
-{% block title %}Редактировать профиль{% endblock %}
+{% block title %}Регистрация{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div style="max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1f5278; margin-bottom: 30px;">Редактировать профиль</h2>
+    <div style="max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #1f5278; margin-bottom: 30px; text-align: center;">Регистрация</h2>
 
         <div class="card">
             <div class="card-body">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <form method="post">
                     {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
 
                     {% for field in form %}
                         <div class="form-group">
@@ -27,6 +27,10 @@
                             {% endif %}
 
                             {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
 
                             {% if field.errors %}
                                 <div style="color: #dc3545; font-size: 13px; margin-top: 5px;">
@@ -38,22 +42,24 @@
                         </div>
                     {% endfor %}
 
-                    <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
-                            Сохранить
-                        </button>
-                        <a href="{% url 'main:profile' %}" class="btn btn-secondary btn-lg" style="flex: 1; text-align: center;">
-                            Отмена
-                        </a>
-                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 20px; font-size: 16px;">
+                        Зарегистрироваться
+                    </button>
                 </form>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="color: #666; margin-bottom: 10px;">Уже есть аккаунт?</p>
+                    <a href="{% url 'main:login' %}" class="btn btn-secondary" style="width: 100%; padding: 10px;">
+                        Войти
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    input[type="text"], input[type="email"], textarea, select {
+    input[type="text"], input[type="email"], input[type="password"], textarea, select {
         width: 100%;
         padding: 12px;
         margin: 0;
@@ -64,7 +70,7 @@
         transition: border-color 0.3s, box-shadow 0.3s;
     }
 
-    input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
         outline: none;
         border-color: #1f5278;
         box-shadow: 0 0 0 3px rgba(31, 82, 120, 0.1);

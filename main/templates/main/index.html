@@ -1,5 +1,36 @@
-{% extends "layout/basic.html" %}
+{% extends "main/basic.html" %}
+
+{% block title %}Главная{% endblock %}
 
 {% block content %}
-  <h2>Разрабы обнову не завезли)</h2>
+<div class="container">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="color: #1f5278; font-size: 36px; margin-bottom: 15px;">Добро пожаловать на платформу дизайна интерьера</h1>
+        <p style="color: #666; font-size: 18px;">Создавайте заявки на разработку дизайна вашего помещения</p>
+    </div>
+
+    {% if user.is_authenticated %}
+    <div style="background-color: white; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f5278; margin-bottom: 20px;">Начните работу</h2>
+        <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Перейдите в раздел "Мои заявки" для управления вашими проектами</p>
+        <a href="{% url 'main:user_requests' %}" class="btn btn-primary btn-lg">
+            Мои заявки
+        </a>
+    </div>
+
+    {% else %}
+    <div style="background-color: white; padding: 40px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f5278; margin-bottom: 20px;">Присоединитесь к нам</h2>
+        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Войдите или зарегистрируйтесь, чтобы начать создавать заявки на дизайн интерьера</p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="{% url 'main:login' %}" class="btn btn-primary btn-lg">
+                Вход
+            </a>
+            <a href="{% url 'main:register' %}" class="btn btn-secondary btn-lg">
+                Регистрация
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

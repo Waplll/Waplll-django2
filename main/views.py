@@ -1,138 +1,209 @@
 from django.http import HttpResponse, Http404
-from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.contrib import messages
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse_lazy
-
-
-from .forms import ChangeUserInfoForm
-from .models import AdvUser
-from django.contrib.auth.views import PasswordChangeView
-from .forms import RegisterUserForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import UpdateView, CreateView, TemplateView, DeleteView
-
-from .forms import CreateRequestForm
-from .models import CreateRequest
-
+from django.urls import reverse_lazy
+from django.contrib import messages
+from .forms import ChangeUserInfoForm, RegisterUserForm, CreateRequestForm, ChangeRequestStatusForm, CategoryForm
+from .models import AdvUser, CreateRequest, Category
 
 
 def index(request):
     completed_requests = CreateRequest.objects.filter(status='completed').order_by('-timestamp')[:4]
-    in_progress_count = CreateRequest.objects.filter(status='in_progress').count()
+    inprogress_count = CreateRequest.objects.filter(status='inprogress').count()
     context = {
         'completed_requests': completed_requests,
-        'in_progress_count': in_progress_count,
+        'inprogress_count': inprogress_count
     }
     return render(request, 'main/index.html', context)
 
+
 @login_required
 def profile(request):
-   return render(request, 'main/profile.html')
+    return render(request, 'main/profile.html')
 
 
 class BBLoginView(LoginView):
-   template_name = 'main/login.html'
+    template_name = 'main/login.html'
 
 
-class BBLogoutView(LoginRequiredMixin, LogoutView):
-   template_name = 'main/logout.html'
+class BBLogoutView(LogoutView):
+    template_name = 'main/logout.html'
+    next_page = 'main:index'
 
 
-class ChangeUserInfoView(SuccessMessageMixin, LoginRequiredMixin,UpdateView):
-   model = AdvUser
-   template_name = 'main/change_user_info.html'
-   form_class = ChangeUserInfoForm
-   success_url = reverse_lazy('main:profile')
-   success_message = 'Личные данные пользователя изменены'
+class ChangeUserInfoView(LoginRequiredMixin, UpdateView):
+    model = AdvUser
+    template_name = 'main/change_user_info.html'
+    form_class = ChangeUserInfoForm
+    success_url = reverse_lazy('main:profile')
 
+    def get_object(self, queryset=None):
+        return self.request.user
 
-   def dispatch(self, request, *args, **kwargs):
-       self.user_id = request.user.pk
-       return super().dispatch(request, *args, **kwargs)
-
-
-   def get_object(self, queryset=None):
-       if not queryset:
-           queryset = self.get_queryset()
-       return get_object_or_404(queryset, pk=self.user_id)
-
-
-class BBPasswordChangeView(SuccessMessageMixin, LoginRequiredMixin, PasswordChangeView):
-   template_name = 'main/password_change.html'
-   success_url = reverse_lazy('main:profile')
-   success_message = 'Пароль пользователя изменен'
-
+    def form_valid(self, form):
+        messages.success(self.request, 'Данные профиля успешно обновлены!')
+        return super().form_valid(form)
 
 
 class RegisterUserView(CreateView):
-   model = AdvUser
-   template_name = 'main/register_user.html'
-   form_class = RegisterUserForm
-   success_url = reverse_lazy('main:register_done')
+    model = AdvUser
+    template_name = 'main/register.html'
+    form_class = RegisterUserForm
+    success_url = reverse_lazy('main:index')
 
-class RegisterDoneView(TemplateView):
-   template_name = 'main/register_done.html'
+    def form_valid(self, form):
+        messages.success(self.request, 'Регистрация успешна! Вы можете авторизоваться.')
+        return super().form_valid(form)
 
-class DeleteUserView(LoginRequiredMixin, DeleteView):
-   model = AdvUser
-   template_name = 'main/delete_user.html'
-   success_url = reverse_lazy('main:index')
 
-   def dispatch(self, request, *args, **kwargs):
-       self.user_id = request.user.pk
-       return super().dispatch(request, *args, **kwargs)
+# Представление для создания заявки
+class CreateRequestView(LoginRequiredMixin, CreateView):
+    model = CreateRequest
+    form_class = CreateRequestForm
+    template_name = 'main/create_request.html'
+    success_url = reverse_lazy('main:user_requests')
 
-   def post(self, request, *args, **kwargs):
-       logout(request)
-       messages.add_message(request, messages.SUCCESS, 'Пользователь удален')
-       return super().post(request, *args, **kwargs)
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.status = 'new'
+        messages.success(self.request, 'Заявка успешно создана!')
+        return super().form_valid(form)
 
-   def get_object(self, queryset=None):
-       if not queryset:
-           queryset = self.get_queryset()
-       return get_object_or_404(queryset, pk=self.user_id)
+    def form_invalid(self, form):
+        messages.error(self.request, 'Ошибка при создании заявки. Проверьте введенные данные.')
+        return super().form_invalid(form)
 
-def view_requests(request):
-    requests = CreateRequest.objects.all()
-    return render(request, 'main/view_requests.html', {'requests': requests})
 
+# Представление для просмотра заявок пользователя (обычный пользователь) или всех заявок (админ)
 @login_required
-def create_request(request):
-    if request.method == 'POST':
-        form = CreateRequestForm(request.POST, request.FILES)
-        if form.is_valid():
-            request_obj = form.save(commit=False)
-            request_obj.user = request.user
-            request_obj.save()
-            return redirect('main:view_requests')
+def user_requests(request):
+    if request.user.is_staff or request.user.is_superuser:
+        # Админ видит все заявки
+        requests_list = CreateRequest.objects.all().order_by('-timestamp')
+        is_admin = True
     else:
-        form = CreateRequestForm()
-    return render(request, 'main/create_request.html', {'form': form})
+        # Обычный пользователь видит только свои заявки
+        requests_list = CreateRequest.objects.filter(user=request.user).order_by('-timestamp')
+        is_admin = False
+
+    context = {
+        'user_requests': requests_list,
+        'is_admin': is_admin,
+    }
+    return render(request, 'main/user_requests.html', context)
 
 
-#метод для удаления заявки
-def delete_request(request, request_id):
-    request_obj = get_object_or_404(CreateRequest, id=request_id)
+# Проверка прав админа
+class IsAdminUser(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
 
-    # Проверка, что пользователь может удалить заявку
-    if request.user != request_obj.user:
-        messages.error(request, 'Вы не можете удалить эту заявку.')
-        return redirect('main:view_requests')
 
-    # Проверка, что статус заявки не "Принято в работу" или "Выполнено"
-    if request_obj.status in ['in_progress', 'completed']:
-        messages.error(request, 'Вы не можете удалить заявку со статусом "Принято в работу" или "Выполнено".')
-        return redirect('main:view_requests')
+# Представление для удаления заявки (только для админа)
+class DeleteRequestView(LoginRequiredMixin, IsAdminUser, DeleteView):
+    model = CreateRequest
+    success_url = reverse_lazy('main:user_requests')
+    template_name = 'main/delete_request_confirm.html'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Заявка успешно удалена!')
+        return super().delete(request, *args, **kwargs)
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'У вас нет прав для удаления заявок. Только администраторы могут удалять заявки.')
+        return redirect('main:user_requests')
+
+
+# Представление для смены статуса заявки (только для админа)
+@login_required
+def change_request_status(request, pk):
+    # Проверка прав админа
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request,
+                       'У вас нет прав для изменения статуса заявок. Только администраторы могут менять статус.')
+        return redirect('main:user_requests')
+
+    request_obj = get_object_or_404(CreateRequest, pk=pk)
 
     if request.method == 'POST':
-        request_obj.delete()
-        messages.success(request, 'Заявка успешно удалена.')
-        return redirect('main:view_requests')
+        form = ChangeRequestStatusForm(request.POST, instance=request_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Статус заявки успешно изменен!')
+            return redirect('main:user_requests')
+    else:
+        form = ChangeRequestStatusForm(instance=request_obj)
 
-    return render(request, 'main/delete_request.html', {'request_obj': request_obj})
+    context = {
+        'form': form,
+        'request_obj': request_obj,
+    }
+    return render(request, 'main/change_request_status.html', context)
+
+
+# Представление для управления категориями
+@login_required
+def manage_categories(request):
+    categories = Category.objects.all().order_by('name')
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'main/manage_categories.html', context)
+
+
+# Представление для создания категории
+@login_required
+def create_category(request):
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Категория успешно создана!')
+            return redirect('main:manage_categories')
+    else:
+        form = CategoryForm()
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'main/create_category.html', context)
+
+
+# Представление для редактирования категории
+@login_required
+def edit_category(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Категория успешно обновлена!')
+            return redirect('main:manage_categories')
+    else:
+        form = CategoryForm(instance=category)
+
+    context = {
+        'form': form,
+        'category': category,
+    }
+    return render(request, 'main/edit_category.html', context)
+
+
+# Представление для удаления категории
+@login_required
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, 'Категория успешно удалена!')
+        return redirect('main:manage_categories')
+
+    context = {
+        'category': category,
+    }
+    return render(request, 'main/delete_category_confirm.html', context)
